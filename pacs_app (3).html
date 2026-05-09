@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PACS+">
+<meta name="theme-color" content="#2E7D32">
+<link rel="manifest" href="pacs_manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="PACS+">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>PACS+ App</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --v:#2E7D32;--vl:#E8F5E9;--vm:#4CAF50;
+  --a:#E6A817;--al:#FFF8E1;
+  --r:#C0392B;--rl:#FDEDEC;
+  --az:#1A3A5C;--azl:#E6F1FB;
+  --c:#2C3E2D;--gray:#F5F5F3;
+  --white:#fff;--border:#E8E8E8;
+  --text:#1A1A1A;--sub:#888;
+  --safe-top:env(safe-area-inset-top,20px);
+  --safe-bot:env(safe-area-inset-bottom,20px);
+}
+html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:var(--gray);color:var(--text);font-size:15px}
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;transition:transform .3s cubic-bezier(.4,0,.2,1),opacity .3s;background:var(--gray)}
+.screen.hidden{transform:translateX(100%);opacity:0;pointer-events:none}
+.screen.slide-left{transform:translateX(-30%);opacity:0;pointer-events:none}
+
+/* STATUS BAR */
+.status-bar{height:var(--safe-top);background:var(--v);flex-shrink:0}
+
+/* TOPBAR */
+.topbar{background:var(--v);padding:12px 16px 14px;flex-shrink:0;display:flex;align-items:center;gap:10px}
+.topbar.white{background:var(--white);border-bottom:1px solid var(--border)}
+.topbar.white .topbar-title{color:var(--text)}
+.topbar.white .back-btn{color:var(--v)}
+.topbar-logo{font-size:22px;font-weight:700;color:#fff;letter-spacing:-.5px}
+.topbar-logo span{color:#A5D6A7}
+.topbar-title{font-size:17px;font-weight:600;color:#fff;flex:1}
+.topbar-sub{font-size:11px;color:rgba(255,255,255,.75);margin-top:1px}
+.back-btn{font-size:24px;color:#fff;cursor:pointer;padding:2px 6px 2px 0;flex-shrink:0;line-height:1}
+.topbar-right{margin-left:auto;color:rgba(255,255,255,.85);font-size:12px;text-align:right}
+
+/* SCROLL CONTENT */
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(70px + var(--safe-bot))}
+.content.no-tab{padding-bottom:20px}
+
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--white);border-top:1px solid var(--border);display:flex;padding-bottom:var(--safe-bot);z-index:100}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 4px 4px;cursor:pointer;gap:3px;transition:color .15s}
+.nav-icon{font-size:22px;line-height:1}
+.nav-label{font-size:10px;font-weight:500;color:var(--sub)}
+.nav-item.on .nav-label{color:var(--v);font-weight:700}
+.nav-item.on .nav-icon{filter:drop-shadow(0 0 2px rgba(46,125,50,.3))}
+
+/* CARDS */
+.card{background:var(--white);border-radius:14px;padding:14px 16px;margin:0 16px 12px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.card-title{font-size:13px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+
+/* KPI GRID */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 16px 12px}
+.kpi-card{background:var(--white);border-radius:14px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.kpi-val{font-size:26px;font-weight:700;color:var(--text)}
+.kpi-label{font-size:11px;color:var(--sub);margin-top:2px;line-height:1.3}
+.kpi-card.danger .kpi-val{color:var(--r)}
+.kpi-card.warn .kpi-val{color:var(--a)}
+.kpi-card.success .kpi-val{color:var(--v)}
+
+/* PATIENT LIST */
+.pat-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;background:var(--white);transition:background .1s}
+.pat-item:first-child{border-radius:14px 14px 0 0}
+.pat-item:last-child{border-bottom:none;border-radius:0 0 14px 14px}
+.pat-item:active{background:#F8F8F8}
+.sem{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.sem-g{background:var(--v)}.sem-o{background:var(--a)}.sem-r{background:var(--r)}
+.pat-info{flex:1}
+.pat-name{font-size:15px;font-weight:600}
+.pat-sub{font-size:12px;color:var(--sub);margin-top:2px}
+.pat-right{text-align:right}
+.pat-days{font-size:13px;font-weight:700}
+.pat-dest{font-size:11px;color:var(--sub)}
+.chevron{color:#CCC;font-size:18px}
+
+/* BADGES */
+.badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;display:inline-block}
+.badge-g{background:var(--vl);color:var(--v)}
+.badge-o{background:var(--al);color:#7D5A00}
+.badge-r{background:var(--rl);color:var(--r)}
+.badge-b{background:var(--azl);color:var(--az)}
+.badge-gray{background:#F0F0F0;color:#666}
+
+/* PROGRESS */
+.prog-wrap{margin-bottom:12px}
+.prog-label{display:flex;justify-content:space-between;font-size:12px;color:var(--sub);margin-bottom:4px}
+.prog-track{height:8px;background:#F0F0F0;border-radius:4px;overflow:hidden}
+.prog-fill{height:8px;border-radius:4px;transition:width .4s}
+
+/* BUTTONS */
+.btn-primary{background:var(--v);color:#fff;border:none;border-radius:12px;padding:14px;width:100%;font-size:16px;font-weight:600;cursor:pointer;transition:opacity .15s}
+.btn-primary:active{opacity:.85}
+.btn-secondary{background:var(--white);color:var(--v);border:1.5px solid var(--v);border-radius:12px;padding:13px;width:100%;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px}
+.btn-danger{background:var(--r);color:#fff;border:none;border-radius:12px;padding:14px;width:100%;font-size:16px;font-weight:600;cursor:pointer}
+
+/* FORMS */
+.form-group{margin-bottom:14px}
+.form-label{font-size:12px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;display:block}
+input.form-input,select.form-input,textarea.form-input{font-size:15px;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;background:var(--white);color:var(--text);width:100%;font-family:inherit;-webkit-appearance:none;appearance:none}
+input.form-input:focus,select.form-input:focus,textarea.form-input:focus{outline:none;border-color:var(--v)}
+textarea.form-input{resize:none;min-height:80px}
+
+/* SECTION HEADER */
+.section-header{padding:20px 16px 8px;font-size:20px;font-weight:700;color:var(--text)}
+.section-sub{padding:0 16px 12px;font-size:13px;color:var(--sub);line-height:1.5}
+
+/* PROFILE SELECTOR */
+.profile-hero{background:linear-gradient(160deg,var(--az) 0%,var(--v) 100%);padding:40px 24px 32px;text-align:center}
+.profile-logo{font-size:48px;font-weight:700;color:#fff;letter-spacing:-1px;margin-bottom:4px}
+.profile-logo span{color:#A5D6A7}
+.profile-tagline{font-size:14px;color:rgba(255,255,255,.8);line-height:1.5}
+.profile-cards{padding:20px 16px}
+.profile-card{background:var(--white);border-radius:18px;padding:20px;margin-bottom:12px;display:flex;align-items:center;gap:16px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.08);transition:transform .15s,box-shadow .15s;border:2px solid transparent}
+.profile-card:active{transform:scale(.98);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.profile-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.profile-name{font-size:16px;font-weight:700;margin-bottom:3px}
+.profile-desc{font-size:12px;color:var(--sub);line-height:1.4}
+
+/* TIMELINE ITEM */
+.tl-item{display:flex;gap:12px;padding:12px 16px}
+.tl-dot-wrap{display:flex;flex-direction:column;align-items:center;gap:0}
+.tl-dot-sm{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.tl-line-sm{flex:1;width:2px;background:#E0E0E0;margin:4px 0}
+.tl-body{flex:1;padding-bottom:8px}
+.tl-time{font-size:11px;color:var(--sub);margin-bottom:2px}
+.tl-text{font-size:13px;line-height:1.4}
+
+/* ISBAR BOX */
+.isbar-box{background:#F0FFF4;border-radius:12px;padding:14px;border-left:4px solid var(--v);margin-bottom:12px}
+.isbar-row{display:flex;gap:10px;margin-bottom:8px}
+.isbar-row:last-child{margin-bottom:0}
+.isbar-letter{font-weight:700;color:var(--v);font-size:18px;min-width:18px}
+.isbar-content{flex:1}
+.isbar-label{font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;margin-bottom:2px}
+.isbar-text{font-size:13px;line-height:1.4}
+
+/* CHECKLIST */
+.check-item{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;background:var(--white);transition:background .1s}
+.check-item:active{background:#F8F8F8}
+.check-box{width:24px;height:24px;border-radius:7px;border:2px solid #CCC;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;margin-top:0}
+.check-box.on{background:var(--v);border-color:var(--v)}
+.check-tick{color:#fff;font-size:14px;font-weight:700;display:none}
+.check-box.on .check-tick{display:block}
+.check-text{flex:1;font-size:14px;line-height:1.4}
+.check-text.done{color:#AAA;text-decoration:line-through}
+.check-note{font-size:11px;color:var(--sub);margin-top:2px}
+
+/* ALERT BANNER */
+.alert{border-radius:12px;padding:12px 14px;margin:0 16px 12px;font-size:13px;line-height:1.5;font-weight:500}
+.alert-r{background:var(--rl);color:var(--r)}
+.alert-o{background:var(--al);color:#7D5A00}
+.alert-g{background:var(--vl);color:var(--v)}
+
+/* FAMILY VIEW */
+.info-card{background:var(--white);border-radius:14px;padding:16px;margin:0 16px 12px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.info-icon{font-size:32px;margin-bottom:8px}
+.info-title{font-size:16px;font-weight:700;margin-bottom:6px}
+.info-text{font-size:14px;color:#444;line-height:1.6}
+.step-item{display:flex;gap:12px;margin-bottom:12px}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--v);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.step-text{flex:1;font-size:14px;line-height:1.5;padding-top:3px}
+.resource-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);cursor:pointer}
+.resource-item:last-child{border-bottom:none}
+.resource-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.resource-name{font-size:14px;font-weight:600}
+.resource-desc{font-size:12px;color:var(--sub);margin-top:1px}
+
+/* URGENCIA */
+.urg-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+.urg-btn{padding:10px 4px;border:2px solid var(--border);border-radius:12px;cursor:pointer;background:var(--white);font-size:12px;font-weight:600;color:var(--sub);text-align:center;transition:all .15s;-webkit-appearance:none}
+.urg-btn.on-g{background:var(--vl);border-color:var(--v);color:var(--v)}
+.urg-btn.on-o{background:var(--al);border-color:var(--a);color:#7D5A00}
+.urg-btn.on-r{background:var(--rl);border-color:var(--r);color:var(--r)}
+
+/* LIVE DOT */
+.live{display:inline-flex;align-items:center;gap:4px;font-size:11px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:#A5D6A7;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* STEP DOTS */
+.step-dots{display:flex;justify-content:center;gap:6px;padding:12px 0}
+.step-dot{width:6px;height:6px;border-radius:50%;background:#E0E0E0;transition:all .2s}
+.step-dot.on{background:var(--v);width:18px;border-radius:3px}
+
+/* SUCCESS */
+.success-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center}
+.success-icon{width:80px;height:80px;border-radius:50%;background:var(--vl);display:flex;align-items:center;justify-content:center;font-size:40px;margin-bottom:20px}
+.success-title{font-size:22px;font-weight:700;margin-bottom:8px}
+.success-sub{font-size:14px;color:var(--sub);line-height:1.6;max-width:280px}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:4px 16px}
+.section-sep{height:8px;background:var(--gray)}
+
+/* NOTIFICATION ITEM */
+.notif-item{display:flex;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--white)}
+.notif-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.notif-text{flex:1;font-size:13px;line-height:1.4}
+.notif-time{font-size:11px;color:var(--sub);white-space:nowrap}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════ SCREEN: PROFILE SELECT -->
+<div class="screen" id="scr-profile">
+  <div class="status-bar" style="background:var(--az)"></div>
+  <div style="overflow-y:auto;flex:1;background:var(--gray)">
+    <div class="profile-hero">
+      <div class="profile-logo">PACS<span>+</span></div>
+      <div style="font-size:13px;color:rgba(255,255,255,.7);margin-top:4px">Planeamento da Alta Clínica Segura</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.6);margin-top:2px">ULS Alto Alentejo · HDJMG</div>
+      <div style="margin-top:16px" class="live"><span class="live-dot"></span><span style="color:rgba(255,255,255,.7)" id="ts-profile"></span></div>
+    </div>
+    <div class="profile-cards">
+      <div style="font-size:13px;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">Seleciona o teu perfil</div>
+      <div class="profile-card" onclick="selectProfile('clinico')">
+        <div class="profile-icon" style="background:var(--vl)">👩‍⚕️</div>
+        <div>
+          <div class="profile-name" style="color:var(--v)">Equipa Clínica</div>
+          <div class="profile-desc">NURSPACS+ · Médico · Assistente Social · EPA</div>
+        </div>
+        <div style="color:#CCC;font-size:20px;margin-left:auto">›</div>
+      </div>
+      <div class="profile-card" onclick="selectProfile('familia')">
+        <div class="profile-icon" style="background:#FFF3E0">👨‍👩‍👦</div>
+        <div>
+          <div class="profile-name" style="color:#E65100">Doente / Família</div>
+          <div class="profile-desc">Informação sobre a alta · Recursos · Contactos</div>
+        </div>
+        <div style="color:#CCC;font-size:20px;margin-left:auto">›</div>
+      </div>
+      <div class="profile-card" onclick="selectProfile('gestao')">
+        <div class="profile-icon" style="background:var(--azl)">📊</div>
+        <div>
+          <div class="profile-name" style="color:var(--az)">Gestão e Liderança</div>
+          <div class="profile-desc">Dashboard · KPIs · ROI · Relatórios</div>
+        </div>
+        <div style="color:#CCC;font-size:20px;margin-left:auto">›</div>
+      </div>
+      <div style="padding:20px 0 8px;font-size:11px;color:var(--sub);text-align:center;line-height:1.6">
+        Equipa PACS+: Ana Catarina Figueira · Ana Roldão · Cátia Antunes · Aldina Rasquinho · Manuela Fava<br>
+        PM: Deolinda Pinto · Sponsor: Dr. Miguel (CA ULSAALE)<br>
+        <strong>Dados simulados para demonstração</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ SCREEN: CLINICO HOME -->
+<div class="screen hidden" id="scr-clinico">
+  <div class="status-bar"></div>
+  <div class="topbar">
+    <div>
+      <div class="topbar-logo">PACS<span>+</span></div>
+      <div class="topbar-sub">Medicina Ala Direita · HDJMG · <span class="live"><span class="live-dot"></span> ao vivo</span></div>
+    </div>
+    <div class="topbar-right" id="ts-clinico"></div>
+  </div>
+  <div class="content" id="tab-doentes-content">
+    <!-- KPIs -->
+    <div style="height:12px"></div>
+    <div class="kpi-grid">
+      <div class="kpi-card danger"><div class="kpi-val">5</div><div class="kpi-label">Alta clínica dada · aguardam</div></div>
+      <div class="kpi-card warn"><div class="kpi-val">38</div><div class="kpi-label">Dias protelamento ativo</div></div>
+      <div class="kpi-card success"><div class="kpi-val">87%</div><div class="kpi-label">Roteiro 72h · meta ≥80%</div></div>
+      <div class="kpi-card"><div class="kpi-val">22</div><div class="kpi-label">Doentes internados</div></div>
+    </div>
+    <div class="alert alert-r">⚠ MI-001: aguarda ULDM há 10 dias — escalar para PM</div>
+    <div style="padding:0 16px 8px;font-size:13px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.05em">Lista de doentes</div>
+    <div style="margin:0 16px;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)" id="pat-list"></div>
+  </div>
+  <div class="content hidden" id="tab-roteiro-content">
+    <div style="height:12px"></div>
+    <div class="card">
+      <div class="card-title">Novo Roteiro de Alta 72h</div>
+      <div class="form-group">
+        <label class="form-label">Episódio (SClínico)</label>
+        <input class="form-input" id="rot-ep" placeholder="Ex: MI-001-2026" value="MI-023-2026">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Doente (iniciais + idade)</label>
+        <input class="form-input" id="rot-doente" placeholder="Ex: J.F., 84 anos">
+      </div>
+      <div class="form-group">
+        <label class="form-label">NURSPACS+ responsável</label>
+        <input class="form-input" id="rot-nurspacs" value="Ana Santos">
+      </div>
+    </div>
+    <div style="padding:0 16px 8px;font-size:13px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.05em">Avaliação clínica</div>
+    <div style="margin:0 16px;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)" id="rot-clin-list"></div>
+    <div style="height:12px"></div>
+    <div style="padding:0 16px 8px;font-size:13px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.05em">Avaliação social</div>
+    <div style="margin:0 16px;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)" id="rot-soc-list"></div>
+    <div style="height:12px"></div>
+    <div class="card">
+      <div class="card-title">Destino de referenciação</div>
+      <div class="form-group">
+        <label class="form-label">Tipo de resposta</label>
+        <select class="form-input" id="rot-tipo">
+          <option value="">Selecionar...</option>
+          <option value="csp">CSP — Centro de Saúde</option>
+          <option value="ecci">RNCCI — ECCI</option>
+          <option value="uldm">RNCCI — ULDM</option>
+          <option value="umdr">RNCCI — UMDR</option>
+          <option value="sad">Rede Social — SAD</option>
+          <option value="erpi">Rede Social — ERPI</option>
+          <option value="familia">Família / Cuidador Informal</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Urgência</label>
+        <div class="urg-grid">
+          <button class="urg-btn" id="ru-n" onclick="setRotUrg('normal')">Rotina<br><span style="font-size:10px;font-weight:400">72h</span></button>
+          <button class="urg-btn on-o" id="ru-p" onclick="setRotUrg('prior')">Prioritária<br><span style="font-size:10px;font-weight:400">48h</span></button>
+          <button class="urg-btn" id="ru-u" onclick="setRotUrg('urgente')">Urgente<br><span style="font-size:10px;font-weight:400">24h</span></button>
+        </div>
+      </div>
+    </div>
+    <div style="padding:0 16px 16px">
+      <button class="btn-primary" onclick="submitRoteiro()">Submeter Roteiro →</button>
+    </div>
+  </div>
+  <div class="content hidden" id="tab-ref-content">
+    <div style="height:12px"></div>
+    <div class="step-dots" id="ref-step-dots"></div>
+    <div id="ref-step-content"></div>
+  </div>
+  <div class="content hidden" id="tab-alertas-content">
+    <div style="height:12px"></div>
+    <div style="padding:0 16px 8px;font-size:13px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.05em">Alertas ativos</div>
+    <div style="margin:0 16px;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)" id="alertas-list"></div>
+    <div style="height:16px"></div>
+    <div style="padding:0 16px 8px;font-size:13px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.05em">Atividade recente</div>
+    <div style="margin:0 16px;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);background:var(--white)" id="activity-list"></div>
+  </div>
+  <div class="bottom-nav">
+    <div class="nav-item on" id="nav-doentes" onclick="switchTab('doentes')"><div class="nav-icon">🏥</div><div class="nav-label">Doentes</div></div>
+    <div class="nav-item" id="nav-roteiro" onclick="switchTab('roteiro')"><div class="nav-icon">📋</div><div class="nav-label">Roteiro</div></div>
+    <div class="nav-item" id="nav-ref" onclick="switchTab('ref')"><div class="nav-icon">📤</div><div class="nav-label">Referência</div></div>
+    <div class="nav-item" id="nav-alertas" onclick="switchTab('alertas')"><div class="nav-icon">🔔</div><div class="nav-label">Alertas</div></div>
+        <div class="ni" onclick="voltarInicio()"><div class="nav-icon">👤</div><div class="nav-label">Perfil</div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ SCREEN: PATIENT DETAIL -->
+<div class="screen hidden" id="scr-patient">
+  <div class="status-bar"></div>
+  <div class="topbar white">
+    <div class="back-btn" onclick="goBack('scr-clinico')">‹</div>
+    <div class="topbar-title" id="pat-detail-title">Detalhe do doente</div>
+  </div>
+  <div class="content no-tab" id="pat-detail-content"></div>
+</div>
+
+<!-- ═══════════════════════════════════ SCREEN: FAMILIA HOME -->
+<div class="screen hidden" id="scr-familia">
+  <div class="status-bar" style="background:#E65100"></div>
+  <div class="topbar" style="background:#E65100">
+    <div class="back-btn" onclick="goBack('scr-profile')">‹</div>
+    <div>
+      <div class="topbar-title">PACS+ Família</div>
+      <div class="topbar-sub">Informação sobre a alta do seu familiar</div>
+    </div>
+  </div>
+  <div class="content no-tab" style="padding-bottom:20px">
+    <div style="height:12px"></div>
+    <div class="info-card" style="border-left:4px solid #E65100">
+      <div class="info-icon">👋</div>
+      <div class="info-title">Bem-vindo ao PACS+</div>
+      <div class="info-text">Estamos a preparar a alta do seu familiar desde o primeiro dia de internamento. Este espaço foi criado para o manter informado e envolvido em todo o processo.</div>
+    </div>
+    <div style="padding:0 16px 8px;font-size:13px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.05em">O que é o PACS+</div>
+    <div class="card">
+      <div class="step-item"><div class="step-num" style="background:#E65100">1</div><div class="step-text">Nas primeiras <strong>72 horas</strong> de internamento, a nossa equipa avalia as necessidades do seu familiar para quando tiver alta.</div></div>
+      <div class="step-item"><div class="step-num" style="background:#E65100">2</div><div class="step-text">Construímos um <strong>plano de alta personalizado</strong> — com destino, recursos de suporte e continuidade de cuidados garantidos.</div></div>
+      <div class="step-item"><div class="step-num" style="background:#E65100">3</div><div class="step-text">Contactamos antecipadamente o <strong>CSP, RNCCI ou resposta social</strong> adequada — para que tudo esteja pronto quando chegar a hora.</div></div>
+      <div class="step-item"><div class="step-num" style="background:#E65100">4</div><div class="step-text">Após a alta, o <strong>Enfermeiro CSP</strong> acompanha o seu familiar nos primeiros 7 dias.</div></div>
+    </div>
+    <div style="padding:0 16px 8px;font-size:13px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.05em">Recursos na comunidade</div>
+    <div class="card">
+      <div class="resource-item">
+        <div class="resource-icon" style="background:var(--vl)">🏠</div>
+        <div><div class="resource-name">SAD — Serviço de Apoio Domiciliário</div><div class="resource-desc">Apoio em casa — higiene, medicação, alimentação</div></div>
+        <div style="color:#CCC;font-size:18px">›</div>
+      </div>
+      <div class="resource-item">
+        <div class="resource-icon" style="background:var(--azl)">🏥</div>
+        <div><div class="resource-name">ECCI — Cuidados Continuados</div><div class="resource-desc">Equipa de saúde que vai a casa</div></div>
+        <div style="color:#CCC;font-size:18px">›</div>
+      </div>
+      <div class="resource-item">
+        <div class="resource-icon" style="background:var(--al)">🏡</div>
+        <div><div class="resource-name">ERPI — Estrutura Residencial</div><div class="resource-desc">Lar residencial para idosos</div></div>
+        <div style="color:#CCC;font-size:18px">›</div>
+      </div>
+      <div class="resource-item">
+        <div class="resource-icon" style="background:var(--rl)">🩺</div>
+        <div><div class="resource-name">CSP — Centro de Saúde</div><div class="resource-desc">Seguimento pelo Enfermeiro CSP</div></div>
+        <div style="color:#CCC;font-size:18px">›</div>
+      </div>
+    </div>
+    <div style="padding:0 16px 8px;font-size:13px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.05em">Contactar a equipa</div>
+    <div class="card">
+      <div style="font-size:14px;line-height:1.6;margin-bottom:12px">Tem dúvidas sobre a alta ou o plano de cuidados? O <strong>NURSPACS+</strong> está disponível para o apoiar.</div>
+      <div style="background:var(--vl);border-radius:10px;padding:12px;text-align:center;margin-bottom:10px">
+        <div style="font-size:12px;color:var(--sub)">NURSPACS+ responsável</div>
+        <div style="font-size:16px;font-weight:700;color:var(--v)">Ana Santos</div>
+        <div style="font-size:13px;color:var(--sub)">Medicina Ala Direita · HDJMG</div>
+      </div>
+      <button class="btn-primary" style="background:#E65100" onclick="alert('Funcionalidade disponível na versão integrada com o SClínico')">📞 Contactar NURSPACS+</button>
+    </div>
+    <div style="padding:0 16px 8px;font-size:13px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.05em">Feedback</div>
+    <div class="card">
+      <div style="font-size:14px;margin-bottom:10px">A sua opinião sobre o processo de alta é muito importante para nós.</div>
+      <div class="form-group">
+        <label class="form-label">Como foi a sua experiência com o PACS+?</label>
+        <select class="form-input">
+          <option>Muito satisfeito/a</option>
+          <option>Satisfeito/a</option>
+          <option>Neutro/a</option>
+          <option>Insatisfeito/a</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Comentários ou sugestões</label>
+        <textarea class="form-input" placeholder="Partilhe a sua experiência..."></textarea>
+      </div>
+      <button class="btn-primary" style="background:#E65100" onclick="alert('Obrigado pelo seu feedback! Foi registado com sucesso.')">Enviar feedback</button>
+    </div>
+    <div style="padding:16px;text-align:center">
+      <button class="btn-secondary" style="border-color:#E65100;color:#E65100" onclick="goBack('scr-profile')">Voltar ao início</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ SCREEN: GESTAO HOME -->
+<div class="screen hidden" id="scr-gestao">
+  <div class="status-bar" style="background:var(--az)"></div>
+  <div class="topbar" style="background:var(--az)">
+    <div class="back-btn" onclick="goBack('scr-profile')">‹</div>
+    <div>
+      <div class="topbar-title">Gestão PACS+</div>
+      <div class="topbar-sub">Dashboard · KPIs · ROI · Deolinda Pinto (PM)</div>
+    </div>
+  </div>
+  <div class="content no-tab" style="padding-bottom:20px">
+    <div style="height:12px"></div>
+    <div class="kpi-grid">
+      <div class="kpi-card success"><div class="kpi-val">+26,2%</div><div class="kpi-label">ROI Ano 0 · piloto</div></div>
+      <div class="kpi-card success"><div class="kpi-val">+19.119€</div><div class="kpi-label">Resultado líquido</div></div>
+      <div class="kpi-card"><div class="kpi-val">265</div><div class="kpi-label">Dias evitados vs 2025</div></div>
+      <div class="kpi-card warn"><div class="kpi-val">38</div><div class="kpi-label">Dias protelamento ativo</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Indicadores · maio 2026</div>
+      <div class="prog-wrap"><div class="prog-label"><span>Roteiro 72h</span><span style="color:var(--v);font-weight:600">87% / ≥80% ✓</span></div><div class="prog-track"><div class="prog-fill" style="width:87%;background:var(--v)"></div></div></div>
+      <div class="prog-wrap"><div class="prog-label"><span>ISBAR na alta</span><span style="color:var(--v);font-weight:600">92% / ≥90% ✓</span></div><div class="prog-track"><div class="prog-fill" style="width:92%;background:var(--v)"></div></div></div>
+      <div class="prog-wrap"><div class="prog-label"><span>Referenciação ≥72h</span><span style="color:var(--v);font-weight:600">79% / ≥75% ✓</span></div><div class="prog-track"><div class="prog-fill" style="width:79%;background:var(--v)"></div></div></div>
+      <div class="prog-wrap"><div class="prog-label"><span>Follow-up 7 dias</span><span style="color:var(--v);font-weight:600">71% / ≥70% ✓</span></div><div class="prog-track"><div class="prog-fill" style="width:71%;background:var(--v)"></div></div></div>
+      <div class="prog-wrap"><div class="prog-label"><span>Registo SClínico</span><span style="color:var(--a);font-weight:600">94% / ≥95% ⚠</span></div><div class="prog-track"><div class="prog-fill" style="width:94%;background:var(--a)"></div></div></div>
+      <div class="prog-wrap"><div class="prog-label"><span>Satisfação doentes</span><span style="color:var(--v);font-weight:600">78% / ≥75% ✓</span></div><div class="prog-track"><div class="prog-fill" style="width:78%;background:var(--v)"></div></div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Value-Based ROI · Ano 0</div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--sub)">Investimento total</span><span style="font-weight:600">73.030 €</span></div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--sub)">Poupança direta</span><span style="font-weight:600;color:var(--v)">+ 86.149 €</span></div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--sub)">Capacity Gains</span><span style="font-weight:600;color:var(--v)">+ 86.312 €</span></div>
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px"><span style="color:var(--sub)">Productivity Gains</span><span style="font-weight:600;color:var(--v)">+ 6.000 €</span></div>
+      <div style="display:flex;justify-content:space-between;padding:10px 0 0;font-size:16px"><span style="font-weight:700">Resultado líquido</span><span style="font-weight:700;color:var(--v);font-size:20px">+19.119 €</span></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Projeção 3 anos</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)"><div><div style="font-size:14px;font-weight:600">Ano 0 · Piloto</div><div style="font-size:12px;color:var(--sub)">HDJMG Ala Direita</div></div><span class="badge badge-g">+26,2%</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)"><div><div style="font-size:14px;font-weight:600">Ano 1 · 4 Alas</div><div style="font-size:12px;color:var(--sub)">Medicina Interna ULSAALE</div></div><span class="badge badge-g">+62,6%</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0"><div><div style="font-size:14px;font-weight:600">Ano 2 · ULSAALE</div><div style="font-size:12px;color:var(--sub)">Todos os serviços</div></div><span class="badge badge-g">+77,9%</span></div>
+      <div style="background:var(--vl);border-radius:10px;padding:12px;margin-top:8px;text-align:center">
+        <div style="font-size:12px;color:var(--sub)">Resultado líquido acumulado 3 anos</div>
+        <div style="font-size:24px;font-weight:700;color:var(--v)">+1.522.531 €</div>
+        <div style="font-size:12px;color:var(--sub)">ROI +133,4% · 3.150 dias evitados</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Custo de não intervir</div>
+      <div style="background:var(--rl);border-radius:10px;padding:14px;text-align:center">
+        <div style="font-size:13px;color:var(--r);margin-bottom:4px">Ala piloto / ano sem PACS+</div>
+        <div style="font-size:26px;font-weight:700;color:var(--r)">287.165 €</div>
+        <div style="font-size:12px;color:var(--r);margin-top:4px">4 alas medicina: 988.647 € · 3 anos: 2.650.309 €</div>
+      </div>
+      <div style="font-size:13px;color:var(--sub);text-align:center;margin-top:10px;font-weight:500">Não intervir custa <strong style="color:var(--r)">4×</strong> mais do que o projeto</div>
+    </div>
+    <div style="padding:0 16px 16px">
+      <button class="btn-secondary" onclick="goBack('scr-profile')">Voltar ao início</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ SCREEN: ROTEIRO SUCCESS -->
+<div class="screen hidden" id="scr-rot-success">
+  <div class="status-bar"></div>
+  <div class="topbar white">
+    <div class="back-btn" onclick="goBack('scr-clinico')">‹</div>
+    <div class="topbar-title">Roteiro submetido</div>
+  </div>
+  <div class="content no-tab">
+    <div class="success-screen">
+      <div class="success-icon">✓</div>
+      <div class="success-title">Roteiro de Alta registado!</div>
+      <div class="success-sub">O Roteiro de Alta PACS+ foi submetido e arquivado no processo do doente no SClínico.</div>
+      <div style="margin-top:20px;background:var(--vl);border-radius:12px;padding:14px;width:100%;text-align:center">
+        <div style="font-size:12px;color:var(--sub)">Referência</div>
+        <div style="font-size:16px;font-weight:700;color:var(--v)" id="rot-ref-id"></div>
+      </div>
+      <div style="margin-top:16px;font-size:13px;color:var(--sub);text-align:center">Próximo passo: iniciar referenciação ≥ 72h antes da alta prevista</div>
+    </div>
+    <div style="padding:0 20px 20px">
+      <button class="btn-primary" onclick="switchTab('ref');goBack('scr-clinico')">Iniciar referenciação →</button>
+      <button class="btn-secondary" onclick="goBack('scr-clinico')">Voltar à lista</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────
+var patients = [
+  {id:'MI-001',nome:'J.F., 84a',adm:'18 abr',alta:'22 abr',espera:10,sem:'r',plano:'Em curso',dest:'RNCCI — ULDM Portalegre',diag:'ICC descompensada',auto:'Dependente total'},
+  {id:'MI-007',nome:'M.C., 79a',adm:'20 abr',alta:'24 abr',espera:8,sem:'r',plano:'Em curso',dest:'Rede Social — SAD Marvão',diag:'AVC isquémico',auto:'Dependente parcial'},
+  {id:'MI-003',nome:'A.R., 76a',adm:'25 abr',alta:'28 abr',espera:4,sem:'o',plano:'Em curso',dest:'RNCCI — ECCI Portalegre',diag:'DPOC exacerbada',auto:'Dependente parcial'},
+  {id:'MI-012',nome:'F.S., 81a',adm:'26 abr',alta:'29 abr',espera:3,sem:'o',plano:'Em curso',dest:'Família / Cuidador Informal',diag:'Pneumonia',auto:'Dependente parcial'},
+  {id:'MI-015',nome:'L.M., 72a',adm:'27 abr',alta:'30 abr',espera:2,sem:'o',plano:'Concluído',dest:'Rede Social — ERPI Elvas',diag:'Fratura fémur',auto:'Dependente total'},
+  {id:'MI-004',nome:'D.P., 68a',adm:'28 abr',alta:'—',espera:0,sem:'g',plano:'Em curso',dest:'CSP — CS Portalegre',diag:'Diabetes descompensada',auto:'Independente'},
+  {id:'MI-009',nome:'C.L., 55a',adm:'29 abr',alta:'—',espera:0,sem:'g',plano:'Por iniciar',dest:'—',diag:'Insuficiência renal',auto:'Independente'},
+  {id:'MI-011',nome:'R.T., 77a',adm:'01 mai',alta:'—',espera:0,sem:'g',plano:'Por iniciar',dest:'—',diag:'ICC',auto:'Dependente parcial'},
+];
+
+var semBadge={r:'badge-r',o:'badge-o',g:'badge-g'};
+var semLabel={r:'Alerta',o:'Atenção',g:'OK'};
+var semDays={r:'var(--r)',o:'var(--a)',g:'var(--v)'};
+
+var rotChecked={clin:{},soc:{}};
+var rotUrg='prior';
+var refCurrentStep=1;
+var refUrg='prior';
+var currentProfile='';
+
+// ── TIME ──────────────────────────────────────────────────
+function updateTime(){
+  var n=new Date();
+  var t=n.toLocaleDateString('pt-PT',{day:'2-digit',month:'short'})+' '+String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
+  ['ts-profile','ts-clinico'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent=t;});
+}
+updateTime(); setInterval(updateTime,30000);
+
+// ── NAVIGATION ────────────────────────────────────────────
+function selectProfile(p){
+  currentProfile=p;
+  var map={clinico:'scr-clinico',familia:'scr-familia',gestao:'scr-gestao'};
+  showScreen(map[p]);
+}
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(function(s){
+    s.classList.add('hidden');
+    s.classList.remove('slide-left');
+  });
+  var el=document.getElementById(id);
+  el.classList.remove('hidden');
+}
+
+function goBack(to){
+  showScreen(to);
+}
+
+// ── PATIENT LIST ──────────────────────────────────────────
+function renderPatList(){
+  var html='';
+  patients.forEach(function(p,i){
+    html+='<div class="pat-item" onclick="showPatDetail('+i+')">';
+    html+='<span class="sem sem-'+p.sem+'"></span>';
+    html+='<div class="pat-info"><div class="pat-name">'+p.nome+'</div>';
+    html+='<div class="pat-sub">'+p.id+' · '+p.plano+'</div></div>';
+    html+='<div class="pat-right">';
+    if(p.espera>0){
+      html+='<div class="pat-days" style="color:'+semDays[p.sem]+'">'+p.espera+'d</div>';
+    } else {
+      html+='<div class="pat-days" style="color:var(--v)">—</div>';
+    }
+    html+='<div class="pat-dest" style="font-size:10px;max-width:80px;text-align:right">'+p.sem.toUpperCase()+'</div>';
+    html+='</div><span class="chevron">›</span></div>';
+  });
+  document.getElementById('pat-list').innerHTML=html;
+}
+
+function showPatDetail(idx){
+  var p=patients[idx];
+  document.getElementById('pat-detail-title').textContent=p.nome;
+  var semColor={r:'var(--r)',o:'var(--a)',g:'var(--v)'};
+  var html='<div style="height:12px"></div>';
+  html+='<div class="card">';
+  html+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">';
+  html+='<span class="sem sem-'+p.sem+'" style="width:16px;height:16px"></span>';
+  html+='<span class="badge badge-'+p.sem+'">'+semLabel[p.sem]+(p.espera>0?' — '+p.espera+' dias':'')+'</span>';
+  html+='</div>';
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px">';
+  html+='<div><div style="color:var(--sub);font-size:11px;margin-bottom:2px">Episódio</div><div style="font-weight:600">'+p.id+'</div></div>';
+  html+='<div><div style="color:var(--sub);font-size:11px;margin-bottom:2px">Admissão</div><div style="font-weight:600">'+p.adm+'</div></div>';
+  html+='<div><div style="color:var(--sub);font-size:11px;margin-bottom:2px">Alta clínica</div><div style="font-weight:600">'+p.alta+'</div></div>';
+  html+='<div><div style="color:var(--sub);font-size:11px;margin-bottom:2px">Autonomia</div><div style="font-weight:600">'+p.auto+'</div></div>';
+  html+='<div style="grid-column:1/-1"><div style="color:var(--sub);font-size:11px;margin-bottom:2px">Diagnóstico</div><div style="font-weight:600">'+p.diag+'</div></div>';
+  html+='<div style="grid-column:1/-1"><div style="color:var(--sub);font-size:11px;margin-bottom:2px">Destino de referenciação</div><div style="font-weight:600">'+p.dest+'</div></div>';
+  html+='</div></div>';
+  html+='<div class="card">';
+  html+='<div class="card-title">Plano de alta</div>';
+  html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)"><span style="font-size:13px;color:var(--sub)">Estado do plano</span><span class="badge '+(p.plano==='Concluído'?'badge-g':p.plano==='Em curso'?'badge-b':'badge-gray')+'">'+p.plano+'</span></div>';
+  html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)"><span style="font-size:13px;color:var(--sub)">Roteiro 72h</span><span class="badge badge-g">✓ Preenchido</span></div>';
+  html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0"><span style="font-size:13px;color:var(--sub)">ISBAR</span><span class="badge '+(p.plano==='Concluído'?'badge-g':'badge-gray')+'">'+(p.plano==='Concluído'?'✓ Enviada':'Pendente')+'</span></div>';
+  html+='</div>';
+  if(p.espera>5){
+    html+='<div class="alert alert-r">⚠ Protelamento de '+p.espera+' dias — escalada necessária para PM do projeto</div>';
+  }
+  html+='<div style="padding:0 16px 16px;display:flex;flex-direction:column;gap:8px">';
+  html+='<button class="btn-primary" onclick="switchTab(\'ref\');goBack(\'scr-clinico\')">Iniciar referenciação</button>';
+  html+='<button class="btn-secondary" onclick="goBack(\'scr-clinico\')">Voltar à lista</button>';
+  html+='</div>';
+  document.getElementById('pat-detail-content').innerHTML=html;
+  showScreen('scr-patient');
+}
+
+// ── TABS ──────────────────────────────────────────────────
+function switchTab(tab){
+  ['doentes','roteiro','ref','alertas'].forEach(function(t){
+    document.getElementById('tab-'+t+'-content').classList.add('hidden');
+    document.getElementById('nav-'+t).classList.remove('on');
+  });
+  document.getElementById('tab-'+tab+'-content').classList.remove('hidden');
+  document.getElementById('nav-'+tab).classList.add('on');
+  if(tab==='ref') renderRefStep();
+  if(tab==='alertas') renderAlertas();
+}
+
+// ── ROTEIRO ───────────────────────────────────────────────
+var rotClinItems=[
+  'Diagnóstico principal identificado e registado',
+  'Comorbilidades relevantes documentadas',
+  'Medicação revista e conciliada',
+  'Grau de dependência funcional avaliado (AVDs)',
+  'Necessidades de reabilitação avaliadas',
+  'Necessidades de monitorização clínica domiciliária',
+  'Doente/família informados sobre o plano de alta',
+];
+var rotSocItems=[
+  'Cuidador informal principal identificado',
+  'Suporte familiar avaliado',
+  'Situação habitacional avaliada',
+  'Resposta social necessária identificada',
+  'Contacto com CSP/RNCCI/Rede Social iniciado',
+];
+
+function renderRotItems(){
+  ['clin','soc'].forEach(function(type){
+    var items=type==='clin'?rotClinItems:rotSocItems;
+    var html='';
+    items.forEach(function(item,i){
+      html+='<div class="check-item" onclick="toggleCheck(\''+type+'\','+i+')">';
+      html+='<div class="check-box" id="chk-'+type+'-'+i+'"><span class="check-tick" id="tick-'+type+'-'+i+'" style="display:none">✓</span></div>';
+      html+='<div class="check-text" id="ct-'+type+'-'+i+'">'+item+'</div>';
+      html+='</div>';
+    });
+    document.getElementById('rot-'+type+'-list').innerHTML=html;
+  });
+}
+
+function toggleCheck(type,i){
+  rotChecked[type][i]=!rotChecked[type][i];
+  var box=document.getElementById('chk-'+type+'-'+i);
+  var tick=document.getElementById('tick-'+type+'-'+i);
+  var ct=document.getElementById('ct-'+type+'-'+i);
+  if(rotChecked[type][i]){box.classList.add('on');tick.style.display='block';ct.classList.add('done');}
+  else{box.classList.remove('on');tick.style.display='none';ct.classList.remove('done');}
+}
+
+function setRotUrg(u){
+  rotUrg=u;
+  document.getElementById('ru-n').className='urg-btn'+(u==='normal'?' on-g':'');
+  document.getElementById('ru-p').className='urg-btn'+(u==='prior'?' on-o':'');
+  document.getElementById('ru-u').className='urg-btn'+(u==='urgente'?' on-r':'');
+}
+
+function submitRoteiro(){
+  var now=new Date();
+  var refId='ROT-'+now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0')+'-'+String(Math.floor(Math.random()*9000)+1000);
+  document.getElementById('rot-ref-id').textContent=refId;
+  showScreen('scr-rot-success');
+}
+
+// ── REFERENCIAÇÃO ─────────────────────────────────────────
+function renderRefStep(){
+  var dots='';
+  for(var i=1;i<=5;i++){
+    dots+='<div class="step-dot'+(i===refCurrentStep?' on':'')+'"></div>';
+  }
+  document.getElementById('ref-step-dots').innerHTML=dots;
+
+  var html='';
+  if(refCurrentStep===1){
+    html='<div class="card"><div class="card-title">Passo 1 — Identificação</div>';
+    html+='<div class="form-group"><label class="form-label">Episódio (SClínico)</label><input class="form-input" id="rp-ep" value="MI-001-2026"></div>';
+    html+='<div class="form-group"><label class="form-label">Doente</label><input class="form-input" id="rp-doente" value="J.F., 84 anos"></div>';
+    html+='<div class="form-group"><label class="form-label">NURSPACS+</label><input class="form-input" id="rp-nurspacs" value="Ana Santos"></div>';
+    html+='<button class="btn-primary" onclick="refNext()">Seguinte →</button></div>';
+  } else if(refCurrentStep===2){
+    html='<div class="card"><div class="card-title">Passo 2 — Necessidades pós-alta</div>';
+    html+='<div class="form-group"><label class="form-label">Autonomia funcional</label><select class="form-input" id="rp-auto"><option>Dependente total</option><option>Dependente parcial</option><option>Independente</option></select></div>';
+    html+='<div class="form-group"><label class="form-label">Suporte familiar</label><select class="form-input"><option>Sem suporte</option><option>Suporte limitado</option><option>Suporte adequado</option></select></div>';
+    html+='<div class="form-group"><label class="form-label">Urgência</label><div class="urg-grid"><button class="urg-btn" id="rpu-n" onclick="setRefUrg(\'normal\')">Rotina<br><small>72h</small></button><button class="urg-btn on-o" id="rpu-p" onclick="setRefUrg(\'prior\')">Prioritária<br><small>48h</small></button><button class="urg-btn" id="rpu-u" onclick="setRefUrg(\'urgente\')">Urgente<br><small>24h</small></button></div></div>';
+    html+='<div style="display:flex;gap:8px"><button class="btn-secondary" onclick="refPrev()">← Anterior</button><button class="btn-primary" onclick="refNext()">Seguinte →</button></div></div>';
+  } else if(refCurrentStep===3){
+    html='<div class="card"><div class="card-title">Passo 3 — Destino</div>';
+    html+='<div class="form-group"><label class="form-label">Tipo de resposta</label><select class="form-input" id="rp-tipo"><option value="csp">CSP — Centro de Saúde</option><option value="ecci">RNCCI — ECCI</option><option value="uldm">RNCCI — ULDM</option><option value="sad">Rede Social — SAD</option><option value="erpi">Rede Social — ERPI</option><option value="familia">Família / Cuidador</option></select></div>';
+    html+='<div class="form-group"><label class="form-label">Entidade</label><select class="form-input" id="rp-dest"><option>CS Portalegre</option><option>CS Elvas</option><option>CS Marvão</option></select></div>';
+    html+='<div style="display:flex;gap:8px"><button class="btn-secondary" onclick="refPrev()">← Anterior</button><button class="btn-primary" onclick="refNext()">Gerar ISBAR →</button></div></div>';
+  } else if(refCurrentStep===4){
+    html='<div class="card"><div class="card-title">Passo 4 — Nota ISBAR</div>';
+    html+='<div class="isbar-box">';
+    html+='<div class="isbar-row"><span class="isbar-letter">I</span><div class="isbar-content"><div class="isbar-label">Identificação</div><div class="isbar-text">J.F., 84 anos · MI-001-2026 · NURSPACS+: Ana Santos</div></div></div>';
+    html+='<div class="isbar-row"><span class="isbar-letter">S</span><div class="isbar-content"><div class="isbar-label">Situação</div><div class="isbar-text">ICC descompensada, estabilizado. Dependente total para AVDs. Alta clínica dada.</div></div></div>';
+    html+='<div class="isbar-row"><span class="isbar-letter">B</span><div class="isbar-content"><div class="isbar-label">Background</div><div class="isbar-text">HTA, DM2. Medicação ajustada. Vive sozinho, sem suporte familiar.</div></div></div>';
+    html+='<div class="isbar-row"><span class="isbar-letter">A</span><div class="isbar-content"><div class="isbar-label">Avaliação</div><div class="isbar-text">Necessita RNCCI — ULDM. Referenciação prioritária (48h).</div></div></div>';
+    html+='<div class="isbar-row"><span class="isbar-letter">R</span><div class="isbar-content"><div class="isbar-label">Recomendações</div><div class="isbar-text">Ativar ULDM Portalegre. Follow-up 7 dias pelo Enfermeiro CSP.</div></div></div>';
+    html+='</div>';
+    html+='<div style="display:flex;gap:8px"><button class="btn-secondary" onclick="refPrev()">← Anterior</button><button class="btn-primary" onclick="refNext()">Enviar referenciação ✓</button></div></div>';
+  } else if(refCurrentStep===5){
+    var now=new Date();
+    var refId='PACS-REF-'+now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0')+'-'+String(Math.floor(Math.random()*9000)+1000);
+    var ts=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
+    html='<div style="padding:0 16px">';
+    html+='<div style="text-align:center;padding:24px 0"><div style="font-size:56px">✅</div>';
+    html+='<div style="font-size:20px;font-weight:700;color:var(--v);margin:8px 0">Referenciação enviada!</div>';
+    html+='<div style="font-size:13px;color:var(--sub)">Referência: <strong>'+refId+'</strong></div>';
+    html+='<div style="font-size:12px;color:var(--sub);margin-top:4px">Enviado às '+ts+'</div></div>';
+    html+='<div class="alert alert-o">Prazo de resposta: <strong>48 horas</strong> · Alerta automático se sem resposta</div>';
+    html+='<div style="font-size:13px;font-weight:600;margin-bottom:8px">Notificações enviadas</div>';
+    html+='<div class="card" style="margin:0 0 12px">';
+    html+='<div class="tl-item"><div class="tl-dot-wrap"><div class="tl-dot-sm" style="background:var(--v)"></div></div><div class="tl-body"><div class="tl-time">agora</div><div class="tl-text">ISBAR publicada no Canal Teams PACS+</div></div></div>';
+    html+='<div class="tl-item"><div class="tl-dot-wrap"><div class="tl-dot-sm" style="background:var(--a)"></div></div><div class="tl-body"><div class="tl-time">agora</div><div class="tl-text">Alerta programado para '+new Date(now.getTime()+48*3600000).toLocaleDateString('pt-PT',{day:'2-digit',month:'short'})+' se sem resposta</div></div></div>';
+    html+='<div class="tl-item"><div class="tl-dot-wrap"><div class="tl-dot-sm" style="background:var(--az)"></div></div><div class="tl-body"><div class="tl-time">agora</div><div class="tl-text">Dashboard atualizado — semáforo laranja</div></div></div>';
+    html+='</div>';
+    html+='<button class="btn-primary" onclick="refCurrentStep=1;renderRefStep()">Nova referenciação</button>';
+    html+='<button class="btn-secondary" onclick="switchTab(\'doentes\')">Voltar à lista</button></div>';
+  }
+  document.getElementById('ref-step-content').innerHTML=html;
+}
+
+function refNext(){refCurrentStep++;renderRefStep();}
+function refPrev(){refCurrentStep--;renderRefStep();}
+function setRefUrg(u){
+  refUrg=u;
+  ['n','p','u'].forEach(function(x){var el=document.getElementById('rpu-'+x);if(el)el.className='urg-btn';});
+  var map={normal:'rpu-n on-g',prior:'rpu-p on-o',urgente:'rpu-u on-r'};
+  var parts=map[u].split(' ');
+  var el=document.getElementById(parts[0]);
+  if(el)el.classList.add(parts[1]);
+}
+
+// ── ALERTAS ───────────────────────────────────────────────
+function renderAlertas(){
+  var alertas=[
+    {cor:'var(--r)',icon:'🚨',text:'MI-001 — aguarda ULDM há 10 dias · escalar para PM',time:'09:14'},
+    {cor:'var(--a)',icon:'⏰',text:'MI-003 — ECCI Portalegre sem resposta · prazo expira hoje às 20:00',time:'09:00'},
+    {cor:'var(--a)',icon:'⏰',text:'MI-007 — referenciação SAD Marvão sem confirmação',time:'08:30'},
+  ];
+  var html=alertas.map(function(a){
+    return '<div class="notif-item"><div class="notif-dot" style="background:'+a.cor+'"></div><div class="notif-text"><strong>'+a.icon+'</strong> '+a.text+'</div><div class="notif-time">'+a.time+'</div></div>';
+  }).join('');
+  document.getElementById('alertas-list').innerHTML=html||'<div style="padding:16px;text-align:center;color:var(--sub)">Sem alertas ativos</div>';
+
+  var activity=[
+    {cor:'var(--v)',text:'MI-015 — ISBAR enviada para ERPI Elvas via Teams PACS+',time:'08:52'},
+    {cor:'var(--v)',text:'MI-012 — referenciação Família confirmada',time:'08:30'},
+    {cor:'var(--v)',text:'MI-009 — Roteiro 72h preenchido pelo NURSPACS+',time:'ontem'},
+    {cor:'var(--az)',text:'Reunião EPA semanal — 6 casos revistos',time:'ontem'},
+  ];
+  document.getElementById('activity-list').innerHTML=activity.map(function(a){
+    return '<div class="notif-item"><div class="notif-dot" style="background:'+a.cor+'"></div><div class="notif-text">'+a.text+'</div><div class="notif-time">'+a.time+'</div></div>';
+  }).join('');
+}
+
+// ── INIT ──────────────────────────────────────────────────
+renderPatList();
+renderRotItems();
+renderRefStep();
+
+// ── VOLTAR AO INÍCIO ──────────────────────────────────────
+function voltarInicio(){
+  var screens = document.querySelectorAll('.screen');
+  screens.forEach(function(s){ s.classList.add('hidden'); });
+  document.getElementById('scr-profile').classList.remove('hidden');
+}
+
+// PWA install prompt
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('data:text/javascript,').catch(function(){});
+}
+</script>
+</body>
+</html>
