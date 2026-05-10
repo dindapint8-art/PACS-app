@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>PACS+ — A sua alta, bem planeada</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--v:#2E7D32;--vl:#E8F5E9;--a:#E6A817;--al:#FFF8E1;--az:#1A3A5C;--r:#C0392B;--c:#1A1A1A;--sub:#666;--border:#E8E8E8}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#F5F5F3;color:var(--c);font-size:15px;min-height:100vh}
+
+/* HEADER */
+.header{background:var(--v);padding:20px 20px 24px;text-align:center}
+.header-logo{font-size:36px;font-weight:700;color:#fff;letter-spacing:-1px}
+.header-logo span{color:#A5D6A7}
+.header-sub{font-size:12px;color:rgba(255,255,255,.8);letter-spacing:1px;text-transform:uppercase;margin-top:4px}
+.header-tag{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.15);border-radius:20px;padding:4px 12px;font-size:11px;color:#fff;margin-top:10px}
+
+/* TABS */
+.tabs{display:flex;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.tab{flex:1;padding:12px 8px;text-align:center;font-size:12px;font-weight:500;color:var(--sub);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+.tab.on{color:var(--v);border-bottom-color:var(--v);font-weight:600}
+
+/* CONTENT */
+.content{padding:16px;max-width:480px;margin:0 auto}
+.panel{display:none}.panel.on{display:block}
+
+/* CARDS */
+.card{background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;border:1px solid var(--border)}
+.card-title{font-size:13px;font-weight:600;color:var(--az);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.card-icon{font-size:16px}
+
+/* STEPS */
+.step{display:flex;gap:12px;margin-bottom:12px}
+.step:last-child{margin-bottom:0}
+.step-num{width:26px;height:26px;border-radius:50%;background:var(--v);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;margin-top:1px}
+.step-text{font-size:13px;line-height:1.6;flex:1;color:#333}
+.step-text strong{color:var(--c)}
+
+/* INFO BOXES */
+.info-box{border-radius:10px;padding:12px 14px;margin-bottom:10px;font-size:13px;line-height:1.6}
+.info-v{background:var(--vl);border-left:3px solid var(--v);color:#1B4D1F}
+.info-a{background:var(--al);border-left:3px solid var(--a);color:#5C3D00}
+.info-az{background:#E6F1FB;border-left:3px solid var(--az);color:#0D2744}
+
+/* RECURSOS */
+.rec-item{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)}
+.rec-item:last-child{border-bottom:none}
+.rec-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.rec-name{font-size:14px;font-weight:500;margin-bottom:2px}
+.rec-desc{font-size:12px;color:var(--sub)}
+
+/* CONTACTO */
+.contact-box{background:var(--vl);border-radius:10px;padding:14px;text-align:center;margin-bottom:12px}
+.contact-name{font-size:16px;font-weight:600;color:var(--v);margin-bottom:2px}
+.contact-role{font-size:12px;color:#3B6D11}
+
+/* FORMULÁRIO */
+.form-label{font-size:11px;font-weight:600;color:var(--sub);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;display:block;margin-top:12px}
+.form-label:first-child{margin-top:0}
+select.finput,textarea.finput{font-size:14px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;background:#fff;color:var(--c);width:100%;font-family:inherit;-webkit-appearance:none}
+select.finput:focus,textarea.finput:focus{outline:none;border-color:var(--v)}
+textarea.finput{resize:none;min-height:80px}
+.stars{display:flex;gap:8px;margin-bottom:4px}
+.star{font-size:28px;cursor:pointer;transition:transform .1s;color:#DDD}
+.star.on{color:#E6A817}
+.star:active{transform:scale(.9)}
+.btn-submit{background:var(--v);color:#fff;border:none;border-radius:10px;padding:14px;width:100%;font-size:15px;font-weight:500;cursor:pointer;margin-top:14px;transition:opacity .15s}
+.btn-submit:active{opacity:.85}
+
+/* SUCCESS */
+.success{display:none;text-align:center;padding:30px 20px}
+.success.on{display:block}
+.success-icon{font-size:56px;margin-bottom:16px}
+.success-title{font-size:20px;font-weight:600;color:var(--v);margin-bottom:8px}
+.success-text{font-size:13px;color:var(--sub);line-height:1.6;max-width:280px;margin:0 auto}
+
+/* FOOTER */
+footer{text-align:center;padding:20px;font-size:11px;color:#AAA;line-height:1.6}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">PACS<span>+</span></div>
+  <div class="header-sub">Planeamento da Alta Clínica Segura</div>
+  <div class="header-tag">🏥 Medicina Interna · HDJMG · ULSAALE</div>
+</div>
+
+<div class="tabs">
+  <div class="tab on" onclick="showTab('info',this)">ℹ️ O que é</div>
+  <div class="tab" onclick="showTab('recursos',this)">🏠 Recursos</div>
+  <div class="tab" onclick="showTab('contacto',this)">📞 Contacto</div>
+  <div class="tab" onclick="showTab('feedback',this)">⭐ Feedback</div>
+</div>
+
+<div class="content">
+
+  <!-- ── TAB 1: O QUE É ── -->
+  <div class="panel on" id="panel-info">
+    <div style="height:4px"></div>
+    <div class="info-box info-v">
+      👋 <strong>Bem-vindo ao PACS+</strong><br>
+      Estamos a preparar a sua alta desde o primeiro dia de internamento. Este espaço foi criado para o manter informado e envolvido em todo o processo.
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="card-icon">📋</span>O que acontece durante o internamento</div>
+      <div class="step"><div class="step-num">1</div><div class="step-text">Nas primeiras <strong>72 horas</strong> de internamento, a nossa equipa avalia as necessidades do seu familiar para quando tiver alta.</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text">Construímos um <strong>plano de alta personalizado</strong> — com destino, recursos de suporte e continuidade de cuidados garantidos.</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text">Contactamos antecipadamente o <strong>CSP, RNCCI ou resposta social</strong> adequada — para que tudo esteja pronto quando chegar a hora.</div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-text">Após a alta, o <strong>Enfermeiro CSP</strong> acompanha o seu familiar nos primeiros <strong>7 dias</strong>.</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="card-icon">👤</span>A sua participação é essencial</div>
+      <div class="info-box info-a" style="margin-bottom:0">
+        A família e os cuidadores são parte fundamental do plano de alta. A sua presença nas conversas com a equipa e o seu envolvimento na preparação da saída fazem toda a diferença para a segurança e bem-estar do seu familiar.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="card-icon">⏰</span>Momentos importantes</div>
+      <div style="font-size:13px;line-height:1;color:#333">
+        <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #F0F0F0">
+          <span style="font-size:13px;font-weight:700;color:#2E7D32;letter-spacing:-.5px;flex-shrink:0">PACS<span style="color:#2E7D32">+</span></span>
+          <span><strong>Admissão</strong> — apresente-se à equipa como cuidador</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #F0F0F0">
+          <span style="font-size:13px;font-weight:700;color:#2E7D32;letter-spacing:-.5px;flex-shrink:0">PACS<span style="color:#2E7D32">+</span></span>
+          <span><strong>72h</strong> — avaliação de necessidades pós-alta</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #F0F0F0">
+          <span style="font-size:13px;font-weight:700;color:#2E7D32;letter-spacing:-.5px;flex-shrink:0">PACS<span style="color:#2E7D32">+</span></span>
+          <span><strong>Antes da alta</strong> — reunião de preparação com o NURSPACS+</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #F0F0F0">
+          <span style="font-size:13px;font-weight:700;color:#2E7D32;letter-spacing:-.5px;flex-shrink:0">PACS<span style="color:#2E7D32">+</span></span>
+          <span><strong>48h após a alta</strong> — contacto do NURSPACS+</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:7px 0">
+          <span style="font-size:13px;font-weight:700;color:#2E7D32;letter-spacing:-.5px;flex-shrink:0">PACS<span style="color:#2E7D32">+</span></span>
+          <span><strong>7 dias após a alta</strong> — visita do Enfermeiro CSP</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB 2: RECURSOS ── -->
+  <div class="panel" id="panel-recursos">
+    <div style="height:4px"></div>
+    <div class="info-box info-az">
+      Os recursos disponíveis para apoiar o seu familiar após a alta dependem do seu perfil clínico e social. A equipa PACS+ identifica e ativa o recurso mais adequado.
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="card-icon">🏠</span>Recursos disponíveis no distrito</div>
+      <div class="rec-item">
+        <div class="rec-icon" style="background:#E8F5E9">🩺</div>
+        <div><div class="rec-name">CSP — Centro de Saúde</div><div class="rec-desc">Seguimento pelo Enfermeiro CSP · consultas médicas · medicação</div></div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-icon" style="background:#E6F1FB">🏥</div>
+        <div><div class="rec-name">RNCCI — ECCI</div><div class="rec-desc">Equipa de cuidados continuados que vai a casa · enfermagem · fisioterapia</div></div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-icon" style="background:#E6F1FB">🛏️</div>
+        <div><div class="rec-name">RNCCI — ULDM / UMDR</div><div class="rec-desc">Unidades de internamento para recuperação e manutenção</div></div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-icon" style="background:#FFF8E1">🏡</div>
+        <div><div class="rec-name">Rede Social — SAD</div><div class="rec-desc">Apoio domiciliário · higiene · medicação · alimentação · companhia</div></div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-icon" style="background:#FFF8E1">🏘️</div>
+        <div><div class="rec-name">Rede Social — ERPI / Centro de Dia</div><div class="rec-desc">Estrutura residencial ou apoio diurno para idosos</div></div>
+      </div>
+      <div class="rec-item">
+        <div class="rec-icon" style="background:#F5F5F3">👨‍👩‍👦</div>
+        <div><div class="rec-name">Família / Cuidador Informal</div><div class="rec-desc">Com apoio e orientação da equipa PACS+ para cuidar em casa</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB 3: CONTACTO ── -->
+  <div class="panel" id="panel-contacto">
+    <div style="height:4px"></div>
+    <div class="contact-box">
+      <div style="font-size:12px;color:#3B6D11;margin-bottom:4px">O seu NURSPACS+ responsável</div>
+      <div class="contact-name">Enfermeiro(a) Coordenador(a) de Alta</div>
+      <div class="contact-role">Medicina Interna Ala Direita · HDJMG</div>
+      <div style="font-size:12px;color:#3B6D11;margin-top:8px">Disponível durante o horário de internamento</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="card-icon">❓</span>Dúvidas frequentes</div>
+      <div style="font-size:13px;line-height:1.8;color:#333">
+        <p style="margin-bottom:8px"><strong>Quando é que o meu familiar vai ter alta?</strong><br>A data é definida pela equipa médica. O NURSPACS+ pode dar-lhe uma estimativa assim que o plano estiver definido.</p>
+        <p style="margin-bottom:8px"><strong>O que posso fazer para ajudar?</strong><br>Estar disponível para reuniões de preparação, participar nas decisões do plano de alta e garantir que o domicílio tem condições adequadas.</p>
+        <p><strong>E se não conseguir cuidar em casa?</strong><br>A equipa PACS+ avalia outras soluções — ECCI, SAD, ERPI — sem que o seu familiar fique sem apoio.</p>
+      </div>
+    </div>
+    <div class="info-box info-v">
+      🔒 Os seus dados e os do seu familiar são tratados com total confidencialidade, ao abrigo do Regulamento Geral de Proteção de Dados (RGPD).
+    </div>
+  </div>
+
+  <!-- ── TAB 4: FEEDBACK ── -->
+  <div class="panel" id="panel-feedback">
+    <div style="height:4px"></div>
+    <div id="form-area">
+      <div class="card">
+        <div class="card-title"><span class="card-icon">⭐</span>A sua opinião é muito importante</div>
+        <p style="font-size:13px;color:var(--sub);line-height:1.5;margin-bottom:12px">O seu feedback ajuda-nos a melhorar o PACS+ para futuros doentes e famílias. Responda às perguntas abaixo — demora menos de 2 minutos.</p>
+
+        <label class="form-label">Como avalia o processo de planeamento da sua alta?</label>
+        <div class="stars" id="stars1">
+          <span class="star" onclick="setStar('stars1',1)">★</span>
+          <span class="star" onclick="setStar('stars1',2)">★</span>
+          <span class="star" onclick="setStar('stars1',3)">★</span>
+          <span class="star" onclick="setStar('stars1',4)">★</span>
+          <span class="star" onclick="setStar('stars1',5)">★</span>
+        </div>
+
+        <label class="form-label">Sentiu-se informado(a) sobre o plano de alta?</label>
+        <select class="finput" id="q1">
+          <option value="">Selecionar...</option>
+          <option value="5">Sim, completamente informado(a)</option>
+          <option value="4">Sim, na maior parte</option>
+          <option value="3">Parcialmente informado(a)</option>
+          <option value="2">Pouco informado(a)</option>
+          <option value="1">Não me senti informado(a)</option>
+        </select>
+
+        <label class="form-label">A equipa PACS+ respondeu às suas dúvidas?</label>
+        <select class="finput" id="q2">
+          <option value="">Selecionar...</option>
+          <option value="5">Sim, sempre</option>
+          <option value="4">Sim, na maioria das vezes</option>
+          <option value="3">Às vezes</option>
+          <option value="2">Raramente</option>
+          <option value="1">Não</option>
+        </select>
+
+        <label class="form-label">Como avalia o apoio recebido após a alta?</label>
+        <select class="finput" id="q3">
+          <option value="">Selecionar...</option>
+          <option value="5">Muito bom</option>
+          <option value="4">Bom</option>
+          <option value="3">Suficiente</option>
+          <option value="2">Insuficiente</option>
+          <option value="1">Não recebi apoio</option>
+          <option value="0">Ainda não tive alta</option>
+        </select>
+
+        <label class="form-label">Comentários ou sugestões (opcional)</label>
+        <textarea class="finput" id="comentario" placeholder="Partilhe a sua experiência, sugestões ou preocupações..."></textarea>
+
+        <button class="btn-submit" onclick="submitFeedback()">Enviar feedback ✓</button>
+      </div>
+    </div>
+    <div class="success" id="success-msg">
+      <div class="success-icon">🙏</div>
+      <div class="success-title">Obrigado pelo seu feedback!</div>
+      <div class="success-text">A sua opinião foi registada e será analisada pela equipa PACS+. O seu contributo ajuda-nos a melhorar o cuidado prestado a todos os doentes e famílias.</div>
+      <div style="margin-top:20px;padding:12px;background:var(--vl);border-radius:10px;font-size:12px;color:#1B4D1F;line-height:1.5">
+        Equipa PACS+ · Medicina Interna Ala Direita<br>Hospital Dr. José Maria Grande · ULSAALE
+      </div>
+    </div>
+  </div>
+
+</div><!-- /content -->
+
+<footer>
+  PACS+ — Planeamento da Alta Clínica Segura<br>
+  ULS Alto Alentejo (ULSAALE) · Hospital Dr. José Maria Grande · Portalegre<br>
+  Meia Dúzia · 2026
+</footer>
+
+<script>
+function showTab(id, btn){
+  document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('on'); });
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('on'); });
+  document.getElementById('panel-'+id).classList.add('on');
+  btn.classList.add('on');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+var starRatings = {};
+function setStar(groupId, rating){
+  starRatings[groupId] = rating;
+  var stars = document.getElementById(groupId).querySelectorAll('.star');
+  stars.forEach(function(s, i){
+    s.classList.toggle('on', i < rating);
+  });
+}
+
+function submitFeedback(){
+  var rating = starRatings['stars1'] || 0;
+  var q1 = document.getElementById('q1').value;
+  var q2 = document.getElementById('q2').value;
+  var q3 = document.getElementById('q3').value;
+
+  if(!rating || !q1 || !q2 || !q3){
+    alert('Por favor responda a todas as perguntas antes de submeter.');
+    return;
+  }
+
+  // Calculate overall satisfaction
+  var total = rating + parseInt(q1) + parseInt(q2) + (parseInt(q3) > 0 ? parseInt(q3) : 3);
+  var avg = total / 4;
+  var positive = avg >= 3.5;
+
+  // Show success
+  document.getElementById('form-area').style.display = 'none';
+  document.getElementById('success-msg').classList.add('on');
+}
+</script>
+</body>
+</html>
